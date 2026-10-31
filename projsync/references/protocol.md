@@ -8,7 +8,7 @@ The protocol applies the layered review principles described in [Addy Osmani's s
 
 ## Repository bootstrap and handoff
 
-A project using `/projsync` should have a human-readable `docs/handle.md` (or a path named by the project). Keep these sections current:
+A project using `/projsync` should have a human-readable `docs/handle.md` (or a path named by the project). If `docs/project-overrides.md` exists, read it before applying defaults. Explicit entries override only the corresponding default rules; unspecified rules remain unchanged. The file cannot bypass explicit user instructions, credential protection, protection of others' uncommitted work, or explicit push authorization. At the beginning of each session, first check whether the upstream has new commits, then read the handle, repository memory, relevant pitfalls, and recent commits. Record the current branch, `HEAD` commit, upstream divergence, and worktree state in the initial projsync status or checkpoint before editing. Keep these sections current:
 
 - current baseline: branch, commit/tag, worktree state, and known divergence;
 - project state and design decisions, including rejected approaches;
@@ -46,7 +46,7 @@ The helper creates `.projsync/claims/<id>.json`:
 
 Statuses are `active`, `blocked`, `done`, and `aborted`; completed claims remain as a short audit trail. Do not reuse an id. A directory claims all descendants. Coordination files are part of the scope whenever they change. Two active claims overlap when either path is equal, is an ancestor of the other, or is the repository root. Claims do not grant permission to edit outside the repository or to push.
 
-`start` requires a clean tracked worktree, an upstream branch with zero ahead/behind divergence, a unique id, and no overlapping active claim. Before editing, commit the reservation and handle update so other members can see it. If a claim becomes stale, do not silently take it over: record an abort or human-approved reassignment in the handle.
+`start` requires a clean tracked worktree, an upstream branch with zero ahead/behind divergence, a unique id, and no overlapping active claim. Before editing, create a local synchronization commit containing the reservation and handle update so the state is saved; this commit is not a push. If a claim becomes stale, do not silently take it over: record an abort or human-approved reassignment in the handle.
 
 ## State transitions and evidence
 
@@ -56,7 +56,7 @@ Statuses are `active`, `blocked`, `done`, and `aborted`; completed claims remain
 - `finish`: require at least one verification checkpoint, a final result, and a clean review decision; mark the claim done.
 - `abort`: mark intentionally abandoned work and explain what remains safe to reuse.
 
-A checkpoint should include the command, exit/result text, input revision, and durable output path when one exists. For external evaluation or board tests, record the evaluator version and leave `[待补充]` until the result is actually received.
+A checkpoint should include the command, exit/result text, input revision, and durable output path when one exists. For external evaluation or board tests, record the evaluator version and leave `[待补充]` until the result is actually received. Board, license, and deployment resources must be declared before use; parallel experiments use isolated worktrees. Credentials and API keys never enter files, logs, or Git. Copy long-lived evidence out of `/tmp`, and never reset or overwrite another member's uncommitted work.
 
 ## Verification profiles and adapters
 
@@ -80,7 +80,9 @@ Review rounds are bounded at three. After three rounds, review only the new diff
 
 ## Branch and release conventions
 
-Projects may use `develop` for active work and `master` for releasable output, but the names are configurable. The selected branch policy must state which gates are required before merging or tagging, whether generated artifacts are ignored, and how a release is rolled back. Never force-push a shared branch. Rebase or merge the latest remote base before push, then re-run affected gates.
+By default, `develop` contains all development material, including source, simulation, testbench, and test scripts. `master` contains only the final signed-off, board-ready and exportable result. Projects may customize the names in `handle.md`, but must preserve the distinction between a rigorous development branch and a clean release branch. The selected policy must state gates before merging or tagging, whether generated artifacts are ignored, and how a release is rolled back. Never force-push a shared branch. Rebase or merge the latest remote base before push, then re-run affected gates.
+
+Keep local persistence and remote publication separate: `git commit` is an ordinary local save point and must not imply `git push`. A push requires an explicit user request. Immediately before a requested push, fetch the upstream, verify the branch and divergence, update the handle with the final commit and remote target, and commit that update before pushing. If the handle update changes the commit hash, use the newest hash as the push target. Record the post-push remote state in a checkpoint or handle entry.
 
 For hardware or other artifact-producing projects, use a two-stage evidence record when useful: land verified source with a pending deployment status, then append the external result and release status in a separate handle/record update. This is a synchronization pattern; the domain skill supplies the actual build and deployment commands.
 

@@ -5,7 +5,7 @@ description: 数字 IC/FPGA 设计验证仓库的文件组织、证据归档和�
 
 # 数字 IC/FPGA 仓库布局与证据
 
-多人或 AI session 的接手、作用域 claim、远程同步、`handle.md`、commitlog、review、提交和 push 纪律统一由 `/projsync` skill 管理。本 skill 只定义硬件项目的目录归属、证据留存和交付分支语义；修改这些内容时先按 projsync 建立 claim。
+多人或 AI session 的接手、作用域 claim、远程同步、`handle.md`、commitlog、review、提交和 push 纪律统一由 `/projsync` skill 管理。本 skill 只定义硬件项目的目录归属、证据留存和交付分支语义；如果项目存在 `docs/project-overrides.md`，其中明确的目录和分支条目优先于本 skill 默认值；修改这些内容时先按 projsync 建立 claim。
 
 ## 目录布局
 
@@ -25,7 +25,7 @@ python_godel/  golden model（数值参考实现）
 
 ## 分支与交付
 
-默认约定 `develop` 保存开发内容，`master` 只合并已签核、可交付的版本；项目可以在 `handle.md` 中声明不同命名。未经完整硬件门禁的 RTL 不进入交付分支，实验性改动保留可回溯 commit。tag 必须指向真正交付的代码，tag 后修复要移动 tag 并留下原因。构建输出是否入库由 `.gitignore` 明确声明，证据用哈希和路径记录。
+默认约定 `develop` 保存全部开发内容，`master` 只保留最终可上板、可导出的已签核结果；项目可以在 `handle.md` 中声明不同命名。仿真、testbench、测试脚本和实验性改动只在 develop 中维护，未经完整硬件门禁的 RTL 不进入 master。develop 上的每个增量保留可回溯 commit；tag 必须指向真正交付的 commit，tag 后修复要移动 tag 并留下原因。本地 commit 与远程 push 分开，push 只有在用户明确要求时执行。构建输出是否入库由 `.gitignore` 明确声明，证据用哈希和路径记录。
 
 `/projsync` 负责同步和提交前状态；本 skill 的硬件交付门禁通常包括 Python golden、Verilator lint、VCS 回归、bit-exact 全矩阵、Vivado 时序/DRC、板测和外部评测。各项目在 handle 中写明精确命令、通过标准、输入版本和证据路径，不能把 mock、仿真、硬件和外部评测混成一个结果。
 
