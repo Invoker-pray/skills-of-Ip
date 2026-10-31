@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Sync"
+  short_description: "Synchronize multi-agent repository work"
+  default_prompt: "Run /projsync to synchronize repository state before collaborative AI development."
